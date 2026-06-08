@@ -281,9 +281,10 @@
               drop-shadow(-1px 0  0 #1a1a1a)
               drop-shadow(0 2px 3px rgba(0,0,0,0.5));
     }
-    /* Black: solid filled glyphs with a faint light rim */
+    /* Black: solid filled glyphs, same scale as white */
     .black-piece {
       color: #111111;
+      font-size: calc(var(--piece-size) * 1.12);
       filter: drop-shadow(0  1px 0 rgba(255,255,255,0.5))
               drop-shadow(0 -1px 0 rgba(255,255,255,0.3))
               drop-shadow( 1px 0  0 rgba(255,255,255,0.3))
