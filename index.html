@@ -1,0 +1,1650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chess Opening Coach</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Crimson+Pro:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold: #c9a84c;
+      --gold-light: #e8c97a;
+      --gold-dim: #8a7040;
+      --bg: #0e0c09;
+      --bg2: #1a1612;
+      --bg3: #221e18;
+      --border: #3d3020;
+      --text: #d4c4a0;
+      --text-dim: #7a6a50;
+      --white-sq: #f0d9b5;
+      --black-sq: #b58863;
+      --green: #8fbc8f;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 16px 40px;
+    }
+
+    h1 {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(1.6rem, 4vw, 2.4rem);
+      color: var(--gold);
+      letter-spacing: 4px;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 0.9rem;
+      letter-spacing: 1px;
+      margin-top: 8px;
+    }
+
+    /* ── SITE HEADER ── */
+    .site-header {
+      position: sticky; top: 0; z-index: 100;
+      width: calc(100% + 32px); margin-left: -16px;
+      background: rgba(14,12,9,0.97);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      height: 52px; padding: 0 28px;
+    }
+    .site-logo {
+      font-family: 'Cinzel', serif; font-size: 0.95rem;
+      color: var(--gold); letter-spacing: 2px; font-weight: 700;
+    }
+    .nav-link {
+      padding: 8px 16px; color: var(--text-dim);
+      font-family: 'Cinzel', serif; font-size: 0.68rem;
+      letter-spacing: 1.5px; text-decoration: none;
+      border: none; background: transparent; cursor: pointer;
+      transition: color 0.2s;
+    }
+    .nav-link:hover { color: var(--gold); }
+
+    /* ── HERO ── */
+    .hero-section {
+      width: 100%; max-width: 900px;
+      text-align: center; padding: 36px 16px 24px;
+    }
+
+    .stats-strip {
+      display: flex; margin-top: 22px;
+      border: 1px solid var(--border); border-radius: 4px;
+      overflow: hidden; max-width: 520px;
+      margin-left: auto; margin-right: auto;
+    }
+    .stat-item {
+      flex: 1; padding: 13px 14px;
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      border-right: 1px solid var(--border); background: var(--bg2);
+    }
+    .stat-item:last-child { border-right: none; }
+    .stat-num {
+      font-family: 'Cinzel', serif; font-size: 1.5rem;
+      color: var(--gold); font-weight: 700; line-height: 1;
+    }
+    .stat-label {
+      font-size: 0.58rem; color: var(--text-dim);
+      letter-spacing: 1.5px; text-transform: uppercase;
+      font-family: 'Cinzel', serif;
+    }
+
+    /* ── CARDS ── */
+    .card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 16px;
+    }
+    .card-title {
+      font-family: 'Cinzel', serif;
+      font-size: 0.72rem;
+      color: var(--gold);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    /* ── BUTTONS ── */
+    button { cursor: pointer; font-family: inherit; font-size: inherit; }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 14px; border-radius: 3px;
+      border: 1px solid var(--border); background: var(--bg3);
+      color: var(--text); font-size: 0.8rem; letter-spacing: 0.5px;
+      transition: all 0.2s; cursor: pointer;
+    }
+    .btn:hover { background: rgba(201,168,76,0.1); border-color: var(--gold-dim); color: var(--gold-light); }
+    .btn-sm { padding: 5px 10px; font-size: 0.75rem; }
+    .btn-danger { border-color: #c03030; color: #e06060; }
+    .btn-danger:hover { background: rgba(192,48,48,0.15); }
+    .btn-active { border-color: var(--gold); color: var(--gold); background: rgba(201,168,76,0.12); }
+
+    /* ── COLOR BUTTONS ── */
+    .color-btn-group { display: flex; gap: 6px; }
+    .color-btn {
+      flex: 1; padding: 7px 8px;
+      border: 1px solid var(--border); border-radius: 3px;
+      background: var(--bg3); color: var(--text-dim);
+      font-size: 0.8rem; font-family: 'Cinzel', serif;
+      letter-spacing: 1px; transition: all 0.2s; cursor: pointer;
+    }
+    .color-btn.active { border-color: var(--gold-dim); color: var(--gold); background: rgba(201,168,76,0.1); }
+    .color-btn:hover:not(.active) { color: var(--text); }
+
+    /* ── HINT TOGGLE ── */
+    .hint-toggle-btn {
+      width: 100%; padding: 10px;
+      border-radius: 3px; border: 1px solid var(--border);
+      background: var(--bg3); color: var(--text-dim);
+      font-size: 0.85rem; font-family: 'Cinzel', serif;
+      letter-spacing: 1px; transition: all 0.2s; cursor: pointer;
+    }
+    .hint-toggle-btn.on {
+      border-color: rgba(0,200,60,0.5); color: #5ed87a;
+      background: rgba(0,180,60,0.08);
+    }
+    .hint-toggle-btn:hover { border-color: var(--gold-dim); }
+
+    /* ── MAIN LAYOUT ── */
+    .main-layout {
+      display: flex; gap: 18px;
+      width: 100%; max-width: 900px;
+      align-items: flex-start;
+    }
+
+    /* ── BOARD ── */
+    .board-wrapper { flex-shrink: 0; }
+    .board-container { position: relative; }
+
+    .board-labels-row { display: flex; padding-left: 20px; }
+    .board-labels-col {
+      display: flex; flex-direction: column;
+      justify-content: space-around; width: 20px;
+    }
+    .board-label {
+      font-family: 'Cinzel', serif; font-size: 0.6rem;
+      color: var(--text-dim); text-align: center;
+      height: 62px; line-height: 62px;
+    }
+    .board-label-file {
+      flex: 1; text-align: center;
+      font-family: 'Cinzel', serif; font-size: 0.6rem;
+      color: var(--text-dim); height: 16px; line-height: 16px;
+    }
+
+    #board {
+      display: grid;
+      grid-template-columns: repeat(8, 62px);
+      grid-template-rows: repeat(8, 62px);
+      border: 2px solid var(--border);
+      cursor: pointer;
+    }
+
+    .sq {
+      width: 62px; height: 62px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2.1rem; position: relative;
+      transition: background 0.15s; user-select: none;
+    }
+    .sq.light { background: var(--white-sq); }
+    .sq.dark  { background: var(--black-sq); }
+    .sq.selected { background: #cdd26a !important; }
+    .sq.last-move { background: rgba(255,255,100,0.35) !important; box-shadow: inset 0 0 0 2px rgba(200,200,50,0.5); }
+    .sq.can-move::after {
+      content:''; position:absolute;
+      width:30%; height:30%; border-radius:50%;
+      background: rgba(0,0,0,0.25);
+    }
+    .sq.can-capture::after {
+      content:''; position:absolute; inset:0; border-radius:0;
+      background: transparent; box-shadow: inset 0 0 0 4px rgba(0,0,0,0.25);
+    }
+
+    /* ── HINT HIGHLIGHTS (animated green) ── */
+    .sq.hint-from {
+      background: rgba(50,210,50,0.35) !important;
+      animation: pulse-from 1s ease-in-out infinite;
+    }
+    .sq.hint-from .piece {
+      filter: drop-shadow(0 0 6px #00ff44) drop-shadow(0 0 14px rgba(0,255,68,0.8)) !important;
+      animation: piece-glow 1s ease-in-out infinite !important;
+    }
+    @keyframes piece-glow {
+      0%,100% { filter: drop-shadow(0 0 5px #00ff44) drop-shadow(0 0 14px rgba(0,255,68,0.8)); }
+      50%      { filter: drop-shadow(0 0 2px #00dd33) drop-shadow(0 0 6px rgba(0,220,50,0.4)); }
+    }
+    @keyframes pulse-from {
+      0%,100% { box-shadow: inset 0 0 0 3px rgba(0,255,68,0.9), 0 0 14px rgba(0,255,68,0.4); }
+      50%      { box-shadow: inset 0 0 0 2px rgba(0,200,50,0.4); }
+    }
+    .sq.hint-to:not(.has-piece)::after {
+      content:''; position:absolute;
+      width:28px; height:28px; border-radius:50%;
+      background: rgba(0,220,60,0.75);
+      pointer-events:none; z-index:2;
+      box-shadow: 0 0 14px rgba(0,255,68,0.8);
+      animation: dot-pulse 1s ease-in-out infinite;
+    }
+    .sq.hint-to.has-piece::before {
+      content:''; position:absolute; inset:2px;
+      border: 4px solid rgba(0,255,68,0.95);
+      border-radius:2px; pointer-events:none; z-index:4;
+      animation: ring-pulse 1s ease-in-out infinite;
+    }
+    @keyframes dot-pulse {
+      0%,100% { transform:scale(1); opacity:1; }
+      50%      { transform:scale(0.8); opacity:0.7; }
+    }
+    @keyframes ring-pulse {
+      0%,100% { border-color:rgba(0,255,68,0.95); }
+      50%      { border-color:rgba(0,200,50,0.5); }
+    }
+    @keyframes pulse-to {
+      0%,100% { background: rgba(0,200,50,0.2) !important; }
+      50%      { background: rgba(0,200,50,0.05) !important; }
+    }
+    .sq.hint-to { animation: pulse-to 1s ease-in-out infinite; }
+
+    /* ── PIECE COLOURS ── */
+    .piece { position: relative; z-index: 3; line-height: 1; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+    .white-piece {
+      color: #ffffff;
+      filter: drop-shadow(0 1px 0 #222) drop-shadow(0 -1px 0 #222)
+              drop-shadow(1px 0 0 #222) drop-shadow(-1px 0 0 #222)
+              drop-shadow(0 2px 3px rgba(0,0,0,0.5));
+    }
+    .black-piece {
+      color: #111111;
+      filter: drop-shadow(0 1px 0 rgba(255,255,255,0.5)) drop-shadow(0 2px 4px rgba(0,0,0,0.7));
+    }
+
+    /* ── TIMER BAR ── */
+    .timer-bar {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 14px; margin-top: 8px;
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 4px;
+    }
+    .timer-display {
+      font-family: 'Courier New', monospace;
+      font-size: 1.4rem; font-weight: 700;
+      color: var(--gold); letter-spacing: 3px;
+      min-width: 68px; text-align: center;
+    }
+    .timer-display.running { color: #70b870; }
+    .timer-label {
+      font-family: 'Cinzel', serif; font-size: 0.58rem;
+      color: var(--text-dim); letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* ── SIDE PANEL ── */
+    .side-panel {
+      width: 300px; flex-shrink: 0;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+
+    /* ── SELECT ── */
+    select {
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 3px; color: var(--text);
+      padding: 7px 10px; font-size: 0.82rem;
+      font-family: inherit; width: 100%; outline: none;
+      transition: border-color 0.2s;
+    }
+    select:focus { border-color: var(--gold-dim); }
+    select option { background: var(--bg2); }
+
+    /* ── TAG CHIPS ── */
+    .tag-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+    .chip {
+      padding: 2px 8px; border-radius: 10px; font-size: 0.67rem;
+      letter-spacing: 0.5px; border: 1px solid;
+    }
+    .chip-trap      { background: rgba(192,48,48,0.15);  color: #e06060; border-color: rgba(192,48,48,0.3); }
+    .chip-gambit    { background: rgba(201,168,76,0.12); color: var(--gold); border-color: rgba(201,168,76,0.25); }
+    .chip-solid     { background: rgba(50,150,50,0.12);  color: #8fbc8f; border-color: rgba(50,150,50,0.25); }
+    .chip-aggressive{ background: rgba(200,80,20,0.12);  color: #e09060; border-color: rgba(200,80,20,0.25); }
+    .chip-default   { background: rgba(201,168,76,0.07); color: var(--text-dim); border-color: var(--border); }
+
+    /* ── HINTS STATUS ── */
+    .hints-status {
+      font-size: 0.75rem; color: var(--text-dim);
+      margin-top: 8px; min-height: 18px;
+    }
+    .hints-status.ok    { color: #70b870; }
+    .hints-status.warn  { color: #c8a060; }
+    .hints-status.done  { color: var(--gold); }
+
+    /* ── NOTES CARD ── */
+    .notes-name {
+      font-family: 'Cinzel', serif; font-size: 0.88rem;
+      color: var(--gold-light); margin-bottom: 6px; line-height: 1.4;
+    }
+    .notes-text {
+      font-family: 'Crimson Pro', 'Georgia', serif;
+      font-size: 0.92rem; color: var(--text-dim); line-height: 1.65;
+    }
+
+    /* ── MOVE LIST ── */
+    .move-list {
+      display: flex; flex-wrap: wrap; gap: 3px;
+      font-family: 'Courier New', monospace; font-size: 0.78rem;
+      min-height: 34px; padding: 7px;
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 3px; max-height: 100px; overflow-y: auto;
+    }
+    .move-token { padding: 2px 4px; border-radius: 2px; color: var(--text-dim); }
+    .move-token.move-num { color: var(--text-dim); }
+    .move-token.white-move { color: var(--text); }
+    .move-token.black-move { color: var(--text-dim); }
+    .move-token.current { background: rgba(201,168,76,0.2); color: var(--gold-light); }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--gold-dim); }
+
+    .help-text { font-size: 0.75rem; color: var(--text-dim); }
+
+    /* ── COURSES SECTION ── */
+    .courses-section {
+      width: 100%; max-width: 900px;
+      margin-top: 56px;
+    }
+    .courses-header {
+      display: flex; align-items: baseline; justify-content: space-between;
+      margin-bottom: 18px; flex-wrap: wrap; gap: 10px;
+    }
+    .courses-heading {
+      font-family: 'Cinzel', serif; font-size: 0.8rem;
+      color: var(--gold); letter-spacing: 3px; text-transform: uppercase;
+    }
+    .courses-cta {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 16px; border-radius: 3px;
+      border: 1px solid var(--gold-dim); background: rgba(201,168,76,0.08);
+      color: var(--gold); font-size: 0.75rem; font-family: 'Cinzel', serif;
+      letter-spacing: 1px; text-decoration: none;
+      transition: all 0.2s;
+    }
+    .courses-cta:hover { background: rgba(201,168,76,0.18); color: var(--gold-light); }
+    .courses-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 10px;
+    }
+    .course-card {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 4px; padding: 14px 15px;
+      display: flex; flex-direction: column; gap: 8px;
+      text-decoration: none; color: inherit;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .course-card:hover { border-color: var(--gold-dim); background: var(--bg3); }
+    .course-name {
+      font-family: 'Cinzel', serif; font-size: 0.8rem;
+      color: var(--gold-light); letter-spacing: 0.5px;
+    }
+    .course-desc {
+      font-size: 0.8rem; color: var(--text-dim); line-height: 1.55; flex: 1;
+    }
+    .course-meta {
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 0.68rem; color: var(--text-dim);
+      font-family: 'Cinzel', serif; letter-spacing: 0.5px;
+      padding-top: 6px; border-top: 1px solid var(--border);
+    }
+    .course-try {
+      color: var(--gold); font-size: 0.68rem;
+    }
+    .site-footer {
+      width: 100%; max-width: 900px;
+      margin-top: 48px; padding: 24px 0;
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 12px;
+      font-size: 0.72rem; color: var(--text-dim);
+    }
+    .footer-logo { font-family: 'Cinzel', serif; color: var(--gold); letter-spacing: 2px; font-size: 0.8rem; }
+    .footer-links { display: flex; gap: 18px; flex-wrap: wrap; }
+    .footer-links a { color: var(--text-dim); text-decoration: none; transition: color 0.2s; }
+    .footer-links a:hover { color: var(--gold); }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<header class="site-header">
+  <span class="site-logo">♟ CHESS OPENING COACH</span>
+  <nav>
+    <a class="nav-link" href="#courses">Courses</a>
+    <a class="nav-link" href="#about">About</a>
+  </nav>
+</header>
+
+<!-- HERO -->
+<section class="hero-section">
+  <h1>♟ OPENING COACH</h1>
+  <p class="subtitle">Master chess openings — drill until they're second nature.</p>
+  <div class="stats-strip">
+    <div class="stat-item">
+      <span class="stat-num" id="stat-visits">—</span>
+      <span class="stat-label">Total Visits</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-num" id="stat-openings">44</span>
+      <span class="stat-label">Openings</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-num" id="stat-sessions">—</span>
+      <span class="stat-label">Your Sessions</span>
+    </div>
+  </div>
+</section>
+
+<!-- MAIN LAYOUT -->
+<div class="main-layout">
+
+  <!-- BOARD -->
+  <div class="board-wrapper">
+    <div class="board-container">
+      <div class="board-labels-row" id="file-labels-top"></div>
+      <div style="display:flex;">
+        <div class="board-labels-col" id="rank-labels-left"></div>
+        <div id="board"></div>
+        <div class="board-labels-col" id="rank-labels-right"></div>
+      </div>
+      <div class="board-labels-row" id="file-labels-bottom"></div>
+    </div>
+
+    <!-- BOARD CONTROLS -->
+    <div style="margin-top:9px;display:flex;gap:6px;flex-wrap:wrap;">
+      <button class="btn btn-sm" onclick="flipBoard()">⇅ Flip</button>
+      <button class="btn btn-sm" onclick="undoMove()">↩ Undo</button>
+      <button class="btn btn-sm btn-danger" onclick="resetBoard()">✕ Reset</button>
+    </div>
+
+    <!-- TIMER BAR -->
+    <div class="timer-bar" style="width:496px;">
+      <div>
+        <div class="timer-display stopped" id="timer-display">00:00</div>
+        <div class="timer-label">Practice Timer</div>
+      </div>
+      <label style="font-size:0.65rem;color:var(--text-dim);display:flex;align-items:center;gap:5px;cursor:pointer;flex:1;">
+        <input type="checkbox" id="timer-auto" style="accent-color:var(--gold)">
+        Auto-start on first move
+      </label>
+      <div style="display:flex;gap:5px;">
+        <button class="btn btn-sm" id="timer-toggle-btn" onclick="toggleTimer()">▶ Start</button>
+        <button class="btn btn-sm btn-danger" onclick="resetTimer()">↺</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SIDE PANEL -->
+  <div class="side-panel">
+
+    <!-- Card 1: You Play As -->
+    <div class="card">
+      <div class="card-title">You Play As</div>
+      <div class="color-btn-group">
+        <button class="color-btn active" id="btn-white" onclick="setPlayerColor('white')">♔ White</button>
+        <button class="color-btn" id="btn-black" onclick="setPlayerColor('black')">♚ Black</button>
+      </div>
+    </div>
+
+    <!-- Card 2: Opening -->
+    <div class="card">
+      <div class="card-title">Opening</div>
+      <select id="opening-select" onchange="onOpeningSelect()">
+        <option value="">— Free play —</option>
+      </select>
+      <div class="tag-chips" id="opening-tags"></div>
+    </div>
+
+    <!-- Card 3: Hints -->
+    <div class="card">
+      <div class="card-title">Hints</div>
+      <button class="hint-toggle-btn on" id="hints-toggle-btn" onclick="toggleHints()">💡 Hints ON</button>
+      <p class="help-text" style="margin-top:8px;">Green = piece to move &nbsp;•&nbsp; Dot = destination</p>
+      <div class="hints-status" id="hints-status">Select an opening above to see hints</div>
+    </div>
+
+    <!-- Card 4: Opening Notes (hidden when no opening selected) -->
+    <div class="card" id="notes-card" style="display:none;">
+      <div class="card-title">Opening Notes</div>
+      <div class="notes-name" id="notes-name"></div>
+      <div class="notes-text" id="notes-text"></div>
+      <div class="tag-chips" id="notes-tags"></div>
+    </div>
+
+    <!-- Card 5: Move History -->
+    <div class="card">
+      <div class="card-title">Move History</div>
+      <div class="move-list" id="move-list"></div>
+      <div style="display:flex;gap:6px;margin-top:9px;">
+        <button class="btn btn-sm" onclick="undoMove()">↩ Undo</button>
+        <button class="btn btn-sm btn-danger" onclick="resetBoard()">✕ Reset</button>
+      </div>
+    </div>
+
+  </div><!-- end side-panel -->
+</div><!-- end main-layout -->
+
+<!-- ABOUT ANCHOR -->
+<div id="about" style="margin-top:56px;width:100%;max-width:900px;">
+  <div class="card" style="text-align:center;">
+    <p class="help-text" style="line-height:1.8;">
+      ♟ Chess Opening Coach &nbsp;·&nbsp; 44 built-in openings and traps &nbsp;·&nbsp; No account required<br>
+      All analysis runs in your browser. Visit count tracked globally via
+      <a href="https://counterapi.dev" target="_blank" style="color:var(--green)">CounterAPI.dev</a>.
+    </p>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// DEFAULT REPERTOIRE
+// ═══════════════════════════════════════════════════════
+const DEFAULT_REPERTOIRE = [
+  {
+    name: "Italian Game",
+    color: "white",
+    tags: ["solid", "classical"],
+    description: "One of the oldest openings. White aims to control the center with pawns on e4 and d4, develop pieces naturally, and castle kingside.",
+    moves: ["e2e4","e7e5","g1f3","b8c6","f1c4"]
+  },
+  {
+    name: "Giuoco Piano",
+    color: "white",
+    tags: ["solid", "classical"],
+    description: "The 'Quiet Game' — after the Italian setup, White plays c3 and d4 to establish a strong center. Leads to rich middlegame positions.",
+    moves: ["e2e4","e7e5","g1f3","b8c6","f1c4","f8c5","c2c3","g8f6","d2d4"]
+  },
+  {
+    name: "Evans Gambit",
+    color: "white",
+    tags: ["gambit", "aggressive"],
+    description: "White sacrifices the b4 pawn to gain rapid development and a strong center. A favorite of Paul Morphy and Kasparov.",
+    moves: ["e2e4","e7e5","g1f3","b8c6","f1c4","f8c5","b2b4"]
+  },
+  {
+    name: "Fried Liver Attack",
+    color: "white",
+    tags: ["aggressive", "trap"],
+    description: "White sacrifices the knight on f7 for a ferocious kingside attack. Black must defend precisely or get mated quickly.",
+    moves: ["e2e4","e7e5","g1f3","b8c6","f1c4","g8f6","f3g5","d7d5","e4d5","c6d5","g5f7"]
+  },
+  {
+    name: "Two Knights Defense Trap",
+    color: "white",
+    tags: ["trap"],
+    description: "After the Fried Liver sac on f7, the king is forced out and White delivers a devastating attack.",
+    moves: ["e2e4","e7e5","g1f3","b8c6","f1c4","g8f6","f3g5","d7d5","e4d5","c6d5","g5f7","e8f7","d1f3","f7e6","b1c3","d5c3","b2c3","e6d6","f3f7"]
+  },
+  {
+    name: "Ruy Lopez (Spanish)",
+    color: "white",
+    tags: ["solid", "classical"],
+    description: "One of the most enduring openings. White pins the Nc6 with Bb5 to pressure the e5 pawn and maintain long-term pressure.",
+    moves: ["e2e4","e7e5","g1f3","b8c6","f1b5"]
+  },
+  {
+    name: "Ruy Lopez Marshall Attack",
+    color: "black",
+    tags: ["gambit", "aggressive"],
+    description: "Black sacrifices a pawn for a fierce kingside attack. One of the most combative defenses against the Spanish.",
+    moves: ["e2e4","e7e5","g1f3","b8c6","f1b5","a7a6","b5a4","g8f6","e1g1","f8e7","f1e1","b7b5","a4b3","e8g8","c2c3","d7d5"]
+  },
+  {
+    name: "Berlin Defense",
+    color: "black",
+    tags: ["solid"],
+    description: "Highly solid defense to the Ruy Lopez. Black exchanges knights and aims for endgame equality. Favored by top GMs.",
+    moves: ["e2e4","e7e5","g1f3","b8c6","f1b5","g8f6","e1g1","f6e4","d2d4","e4d6","b5c6","d7c6","d4e5","d6f5"]
+  },
+  {
+    name: "Sicilian Defense",
+    color: "black",
+    tags: ["aggressive", "classical"],
+    description: "The most popular response to 1.e4. Black fights for the center asymmetrically with c5, leading to rich, unbalanced positions.",
+    moves: ["e2e4","c7c5"]
+  },
+  {
+    name: "Sicilian Najdorf",
+    color: "black",
+    tags: ["aggressive"],
+    description: "The sharpest Sicilian variation. Black plays a6 to prevent Nb5, keep flexible pawn structure, and prepare queenside expansion.",
+    moves: ["e2e4","c7c5","g1f3","d7d6","d2d4","c5d4","f3d4","g8f6","b1c3","a7a6"]
+  },
+  {
+    name: "Sicilian Dragon",
+    color: "black",
+    tags: ["aggressive"],
+    description: "Black fianchettoes the dark-squared bishop, aiming it at the long diagonal. Leads to razor-sharp positions with opposite-side castling.",
+    moves: ["e2e4","c7c5","g1f3","d7d6","d2d4","c5d4","f3d4","g8f6","b1c3","g7g6","c1e3","f8g7","f2f3","e8g8","d1d2","b8c6","f1c4","c8d7","e1c1"]
+  },
+  {
+    name: "Sicilian Scheveningen",
+    color: "black",
+    tags: ["solid"],
+    description: "Black sets up a solid small center with d6+e6. Flexible and resilient — used by many world champions.",
+    moves: ["e2e4","c7c5","g1f3","d7d6","d2d4","c5d4","f3d4","g8f6","b1c3","e7e6"]
+  },
+  {
+    name: "Sicilian Kan / Taimanov",
+    color: "black",
+    tags: ["solid"],
+    description: "Black plays a6 or e6 early for flexibility. Avoids sharp theory while keeping counterplay options open.",
+    moves: ["e2e4","c7c5","g1f3","e7e6","d2d4","c5d4","f3d4","a7a6"]
+  },
+  {
+    name: "Sicilian Wing Gambit Trap",
+    color: "black",
+    tags: ["trap"],
+    description: "When White tries the Wing Gambit (b4), Black can accept and exploit White's weakened queenside.",
+    moves: ["e2e4","c7c5","b2b4","c5b4","a2a3","b4a3","b1a3","b8c6","a3b5","d7d5","e4d5","d8d5","b1c3","d5e5"]
+  },
+  {
+    name: "French Defense",
+    color: "black",
+    tags: ["solid"],
+    description: "Solid and reliable. Black builds a pawn chain and counterattacks in the center. Leads to rich strategic battles.",
+    moves: ["e2e4","e7e6","d2d4","d7d5"]
+  },
+  {
+    name: "French Winawer",
+    color: "black",
+    tags: ["aggressive"],
+    description: "Black pins the Nc3 with Bb4 and creates pawn tensions. One of the most theoretically complex French variations.",
+    moves: ["e2e4","e7e6","d2d4","d7d5","b1c3","f8b4","e4e5","c7c5","a2a3","b4c3","b2c3","g8e7"]
+  },
+  {
+    name: "French Tarrasch Trap",
+    color: "white",
+    tags: ["trap"],
+    description: "In the French Tarrasch, White can set a subtle trap involving a knight sacrifice to win the queen.",
+    moves: ["e2e4","e7e6","d2d4","d7d5","b1d2","c7c5","e4d5","e6d5","d2f3","b8c6","f1b5","f8d6","d4c5","d6c5","e1g1","g8e7","f3b3","c5d6","f1e1","e8g8","c1g5","f7f6","g5h4","g7g5","f3g5"]
+  },
+  {
+    name: "Caro-Kann Defense",
+    color: "black",
+    tags: ["solid"],
+    description: "Very solid defense where Black supports d5 with c6. Leads to a solid pawn structure with good endgame prospects.",
+    moves: ["e2e4","c7c6","d2d4","d7d5"]
+  },
+  {
+    name: "Caro-Kann Classical",
+    color: "black",
+    tags: ["solid"],
+    description: "Black develops the bishop outside the pawn chain before closing it with e6. Very reliable and theoretical.",
+    moves: ["e2e4","c7c6","d2d4","d7d5","b1c3","d5e4","c3e4","c8f5","e4g3","f5g6","h2h4","h7h6","g1f3","b8d7","h4h5","g6h7","f1d3","h7d3","d1d3","e7e6","c1d2","g8f6","e1c1","f8e7"]
+  },
+  {
+    name: "Caro-Kann Fantasy Variation Trap",
+    color: "white",
+    tags: ["trap"],
+    description: "The Fantasy Variation (3.f3) can lead to a trap if Black plays carelessly.",
+    moves: ["e2e4","c7c6","d2d4","d7d5","f2f3","e7e6","b1c3","f8b4","a2a3","b4c3","b2c3","g8f6","e4e5","f6d7","f2f4","c6c5","g1f3","b8c6","f1d3","c5d4","c3d4","c6b4","e1g1","c8d7","f3g5","b4d3","g5h7"]
+  },
+  {
+    name: "Pirc Defense",
+    color: "black",
+    tags: ["solid"],
+    description: "Black allows White to build a big center and then undermines it. Leads to complex, hypermodern positions.",
+    moves: ["e2e4","d7d6","d2d4","g8f6","b1c3","g7g6","f2f4","f8g7","g1f3","e8g8"]
+  },
+  {
+    name: "Queen's Gambit",
+    color: "white",
+    tags: ["solid", "classical"],
+    description: "A cornerstone of opening theory. White offers a pawn to gain center control. Both QGA and QGD lead to strategic battles.",
+    moves: ["d2d4","d7d5","c2c4"]
+  },
+  {
+    name: "Queen's Gambit Accepted",
+    color: "black",
+    tags: ["aggressive"],
+    description: "Black accepts the gambit pawn and aims for quick development and counterplay against White's center.",
+    moves: ["d2d4","d7d5","c2c4","d5c4","g1f3","g8f6","e2e3","e7e6","f1c4","c7c5","e1g1","a7a6","c4b3","b7b5"]
+  },
+  {
+    name: "Queen's Gambit Declined",
+    color: "black",
+    tags: ["solid"],
+    description: "Extremely solid — Black declines the gambit and fights for the center with e6. The backbone of many world champions' repertoires.",
+    moves: ["d2d4","d7d5","c2c4","e7e6","b1c3","g8f6","c1g5","f8e7","e2e3","e8g8","g1f3","b8d7","a1c1","c7c6","f1d3","d5c4","d3c4","d7d5"]
+  },
+  {
+    name: "Slav Defense",
+    color: "black",
+    tags: ["solid"],
+    description: "Black defends d5 with c6, keeping the light-squared bishop active. Very sound and popular at all levels.",
+    moves: ["d2d4","d7d5","c2c4","c7c6","g1f3","g8f6","b1c3","d5c4","a2a4","c8f5","e2e3","e7e6","f1c4","f8b4"]
+  },
+  {
+    name: "Semi-Slav Defense",
+    color: "black",
+    tags: ["solid"],
+    description: "Combining elements of the QGD and Slav. Black sets up a strong pawn center with d5+e6+c6.",
+    moves: ["d2d4","d7d5","c2c4","c7c6","g1f3","g8f6","b1c3","e7e6","e2e3","b8d7","f1d3","d5c4","d3c4","b7b5","c4d3","c8b7"]
+  },
+  {
+    name: "King's Indian Defense",
+    color: "black",
+    tags: ["aggressive"],
+    description: "A fighting defense — Black allows White a big center then counterattacks with f5 or e5. Rich in tactical possibilities.",
+    moves: ["d2d4","g8f6","c2c4","g7g6","b1c3","f8g7","e2e4","d7d6","g1f3","e8g8","f1e2","e7e5","e1g1","b8c6","d4d5","c6e7","f3e1","f6d7","f2f3","f7f5"]
+  },
+  {
+    name: "King's Indian Saemisch Trap",
+    color: "black",
+    tags: ["trap"],
+    description: "In the Saemisch variation, Black can sacrifice the exchange for a powerful attack.",
+    moves: ["d2d4","g8f6","c2c4","g7g6","b1c3","f8g7","e2e4","d7d6","f2f3","e8g8","c1e3","e7e5","d4d5","f6h5","d1d2","d8h4","g2g3","h5g3","d2f2","g3f1","f2h4","f1e3"]
+  },
+  {
+    name: "Nimzo-Indian Defense",
+    color: "black",
+    tags: ["solid", "classical"],
+    description: "Black pins White's knight immediately with Bb4, disrupting center control. One of the most respected defenses in chess.",
+    moves: ["d2d4","g8f6","c2c4","e7e6","b1c3","f8b4"]
+  },
+  {
+    name: "Bogo-Indian Defense",
+    color: "black",
+    tags: ["solid"],
+    description: "Similar to Nimzo but with Nf3 played first. Black pins the knight on f3 and aims for solid equality.",
+    moves: ["d2d4","g8f6","c2c4","e7e6","g1f3","f8b4","c1d2","b4d2","d1d2","e8g8","b1c3","d7d5"]
+  },
+  {
+    name: "Catalan Opening",
+    color: "white",
+    tags: ["solid"],
+    description: "White combines the Queen's Gambit with a kingside fianchetto. Long-term pressure on the d4-d5 complex.",
+    moves: ["d2d4","g8f6","c2c4","e7e6","g1f3","d7d5","g2g3","f8b4","c1d2","b4e7","f1g2","e8g8","e1g1","d5c4","d1c2","a7a6","a2a4","c8d7"]
+  },
+  {
+    name: "London System",
+    color: "white",
+    tags: ["solid"],
+    description: "A solid setup that can be played against almost anything. White builds a stable structure with d4, Nf3, Bf4.",
+    moves: ["d2d4","d7d5","g1f3","g8f6","c1f4","e7e6","e2e3","f8d6","f4g3","e8g8","b1d2","c7c5","c2c3","b8c6","f1d3"]
+  },
+  {
+    name: "London Trap",
+    color: "white",
+    tags: ["trap"],
+    description: "In the London System, there's a sneaky trap where Black captures on g3 and White wins material.",
+    moves: ["d2d4","d7d5","g1f3","g8f6","c1f4","e7e6","e2e3","c7c5","c2c3","b8c6","b1d2","f8d6","f4g3","e8g8","f1d3","d6g3","h2g3","d8b6","d1b3","b6b3","a2b3","c5d4","c3d4","c6b4","d3b5","a7a6","b5d7","c8d7","b3b4"]
+  },
+  {
+    name: "King's Gambit",
+    color: "white",
+    tags: ["gambit", "aggressive"],
+    description: "A romantic gambit where White sacrifices the f4 pawn for rapid development and kingside attack. Sharp and risky.",
+    moves: ["e2e4","e7e5","f2f4"]
+  },
+  {
+    name: "King's Gambit Accepted Trap",
+    color: "white",
+    tags: ["trap", "gambit"],
+    description: "After 1.e4 e5 2.f4 exf4 3.Nf3, if Black plays 3...g5 4.Bc4 g4? White wins with 5.Ne5 Qh4+ 6.Kf1.",
+    moves: ["e2e4","e7e5","f2f4","e5f4","g1f3","g7g5","f1c4","g5g4","f3e5","d8h4","e1f1","d7d6","e5d3","f7f3","d3f2","f3g2","f1g2","h4h2","g2f3","b8c6","d2d3"]
+  },
+  {
+    name: "Scholar's Mate Defense",
+    color: "black",
+    tags: ["trap"],
+    description: "The Scholar's Mate threatens Qxf7#. Black must know how to defend and then punish White's early queen sorties.",
+    moves: ["e2e4","e7e5","f1c4","b8c6","d1h5","g8f6","h5f5","d7d5"]
+  },
+  {
+    name: "Scholar's Mate (White)",
+    color: "white",
+    tags: ["trap"],
+    description: "The classic Scholar's Mate: 1.e4 e5 2.Bc4 Nc6 3.Qh5 threatening Qxf7#. Works only against complete beginners.",
+    moves: ["e2e4","e7e5","f1c4","b8c6","d1h5","g8f6","h5f7"]
+  },
+  {
+    name: "Budapest Gambit Trap",
+    color: "black",
+    tags: ["trap", "gambit"],
+    description: "After 1.d4 Nf6 2.c4 e5!? Black sacrifices a pawn for rapid development and traps White's queen.",
+    moves: ["d2d4","g8f6","c2c4","e7e5","d4e5","f6g4","c1f4","b8c6","g1f3","f8b4","b1d2","d8e7","a2a3","c6e5","a3b4","e5d3"]
+  },
+  {
+    name: "Englund Gambit Trap",
+    color: "black",
+    tags: ["trap", "gambit"],
+    description: "After 1.d4 e5!? Black accepts doubled pawns for piece activity and attempts to trap White's queen.",
+    moves: ["d2d4","e7e5","d4e5","b8c6","g1f3","d8e7","c1f4","e7b4","b1d2","b4b2","f1c4","b2c3","f4b8","a8b8","c4f7","e8f7","d2b3","b8b3","a2b3"]
+  },
+  {
+    name: "Benko Gambit",
+    color: "black",
+    tags: ["gambit"],
+    description: "Black sacrifices a pawn on b5 for long-term queenside pressure. The resulting positions give Black excellent compensation.",
+    moves: ["d2d4","g8f6","c2c4","c7c5","d4d5","b7b5","c4b5","a7a6","b5a6","c8a6","b1c3","g7g6","g1f3","f8g7","g2g3","e8g8","f1g2","d7d6"]
+  },
+  {
+    name: "Grob's Attack Trap",
+    color: "black",
+    tags: ["trap"],
+    description: "White's unusual 1.g4 can be punished with accurate play. Black refutes the weakened kingside.",
+    moves: ["g2g4","d7d5","f1g2","c8g4","c2c4","d4d4","d1b3","d8d7","b3b7","b8c6","b7c6","d7c6","g2c6","e8e7"]
+  },
+  {
+    name: "Fool's Mate",
+    color: "black",
+    tags: ["trap"],
+    description: "The fastest possible checkmate in chess. White plays 1.f3? e5 2.g4?? and Black delivers Qh4#.",
+    moves: ["f2f3","e7e5","g2g4","d8h4"]
+  },
+  {
+    name: "Légal Trap",
+    color: "white",
+    tags: ["trap"],
+    description: "White appears to blunder the queen but wins by force with a knight sacrifice and discovered check.",
+    moves: ["e2e4","e7e5","g1f3","b8c6","f1c4","d7d6","b1c3","c8g4","h2h3","g4h5","f3e5","h5d1","c4f7","e8e7","c3d5"]
+  },
+  {
+    name: "Blackburne Shilling Gambit",
+    color: "black",
+    tags: ["trap", "gambit"],
+    description: "Black plays a dubious gambit 3...Nd4!? to set the Blackburne-Shilling trap. White must find 4.Nxe5 to refute it.",
+    moves: ["e2e4","e7e5","g1f3","b8c6","f1c4","c6d4","f3e5","d8g5","e5f7","g5g2","h1f1","g2e4","c4e2","g8f3"]
+  },
+  {
+    name: "Cambridge Springs Pin Trap",
+    color: "black",
+    tags: ["trap"],
+    description: "In the Queen's Gambit Declined, the Cambridge Springs variation pins White's knight and creates winning threats.",
+    moves: ["d2d4","d7d5","c2c4","e7e6","b1c3","g8f6","c1g5","b8d7","g1f3","c7c6","e2e3","d8a5","f3d2","f8b4","d1c2","e8g8","f1e2","e7e5","e1g1","e5d4","e3d4","d5c4","c3c4","a5h5"]
+  }
+];
+
+// ═══════════════════════════════════════════════════════
+// CHESS ENGINE
+// ═══════════════════════════════════════════════════════
+
+const INIT_POSITION = [
+  ['r','n','b','q','k','b','n','r'],
+  ['p','p','p','p','p','p','p','p'],
+  [null,null,null,null,null,null,null,null],
+  [null,null,null,null,null,null,null,null],
+  [null,null,null,null,null,null,null,null],
+  [null,null,null,null,null,null,null,null],
+  ['P','P','P','P','P','P','P','P'],
+  ['R','N','B','Q','K','B','N','R']
+];
+
+// ── State ──
+let board = [];
+let flipped = false;
+let turn = 'white';
+let selectedSq = null;
+let moveHistory = [];
+let currentMoveIdx = -1;
+let highlightLastMove = [];
+let castlingRights = { K: true, Q: true, k: true, q: true };
+let enPassantSq = null;
+
+let playerColor = 'white';
+let hintsOn = true;
+let selectedOpening = null;
+let movesDone = 0;
+
+// ── Glyphs ──
+const WP_GLYPHS = { K:'♔', Q:'♕', R:'♖', B:'♗', N:'♘', P:'♙' };
+const BP_GLYPHS = { K:'♚', Q:'♛', R:'♜', B:'♝', N:'♞', P:'♟' };
+
+function pieceSymbol(p) {
+  if (!p) return '';
+  const w = p === p.toUpperCase();
+  const t = p.toUpperCase();
+  return w ? (WP_GLYPHS[t] || p) : (BP_GLYPHS[t] || p);
+}
+
+// ── Helpers ──
+function deepCopy(arr) { return arr.map(r => r ? [...r] : []); }
+function isWhite(p)    { return p && p === p.toUpperCase(); }
+function isBlack(p)    { return p && p === p.toLowerCase(); }
+function isEnemy(p, t) { return t === 'white' ? isBlack(p) : isWhite(p); }
+function isFriend(p, t){ return t === 'white' ? isWhite(p) : isBlack(p); }
+function inBounds(r,c) { return r >= 0 && r < 8 && c >= 0 && c < 8; }
+function cloneBoard(b) { return b.map(r => [...r]); }
+
+// ── UCI ──
+function uciToMove(uci) {
+  if (!uci || uci.length < 4) return null;
+  const F = 'abcdefgh';
+  const fc = F.indexOf(uci[0]);
+  const fr = 8 - parseInt(uci[1]);
+  const tc = F.indexOf(uci[2]);
+  const tr = 8 - parseInt(uci[3]);
+  if (fc < 0 || tc < 0 || isNaN(fr) || isNaN(tr)) return null;
+  return { fr, fc, tr, tc };
+}
+
+// ── Move Generation ──
+function slidingMoves(b, r, c, dirs, t) {
+  const moves = [];
+  for (const [dr, dc] of dirs) {
+    let nr = r + dr, nc = c + dc;
+    while (inBounds(nr, nc)) {
+      if (b[nr][nc]) { if (isEnemy(b[nr][nc], t)) moves.push([nr, nc]); break; }
+      moves.push([nr, nc]);
+      nr += dr; nc += dc;
+    }
+  }
+  return moves;
+}
+
+function pieceMoves(b, r, c, t, epSq, castling) {
+  const p = b[r][c];
+  if (!p) return [];
+  const moves = [];
+  const pt = p.toUpperCase();
+
+  if (pt === 'P') {
+    const dir = isWhite(p) ? -1 : 1;
+    const startRow = isWhite(p) ? 6 : 1;
+    const nr = r + dir;
+    if (inBounds(nr, c) && !b[nr][c]) {
+      moves.push([nr, c]);
+      if (r === startRow && !b[nr + dir][c]) moves.push([nr + dir, c]);
+    }
+    for (const dc of [-1, 1]) {
+      if (inBounds(nr, c + dc)) {
+        if (isEnemy(b[nr][c + dc], t)) moves.push([nr, c + dc]);
+        if (epSq && epSq[0] === nr && epSq[1] === c + dc) moves.push([nr, c + dc]);
+      }
+    }
+    return moves;
+  }
+
+  if (pt === 'N') {
+    for (const [dr, dc] of [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]]) {
+      const nr = r + dr, nc = c + dc;
+      if (inBounds(nr, nc) && !isFriend(b[nr][nc], t)) moves.push([nr, nc]);
+    }
+    return moves;
+  }
+
+  if (pt === 'B') return slidingMoves(b, r, c, [[-1,-1],[-1,1],[1,-1],[1,1]], t);
+  if (pt === 'R') return slidingMoves(b, r, c, [[-1,0],[1,0],[0,-1],[0,1]], t);
+  if (pt === 'Q') return slidingMoves(b, r, c, [[-1,-1],[-1,1],[1,-1],[1,1],[-1,0],[1,0],[0,-1],[0,1]], t);
+
+  if (pt === 'K') {
+    for (const [dr, dc] of [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]]) {
+      const nr = r + dr, nc = c + dc;
+      if (inBounds(nr, nc) && !isFriend(b[nr][nc], t)) moves.push([nr, nc]);
+    }
+    if (castling) {
+      const row = isWhite(p) ? 7 : 0;
+      if (r === row) {
+        if (isWhite(p)) {
+          if (castling.K && !b[row][5] && !b[row][6] && b[row][7] === 'R') moves.push([row, 6]);
+          if (castling.Q && !b[row][3] && !b[row][2] && !b[row][1] && b[row][0] === 'R') moves.push([row, 2]);
+        } else {
+          if (castling.k && !b[row][5] && !b[row][6] && b[row][7] === 'r') moves.push([row, 6]);
+          if (castling.q && !b[row][3] && !b[row][2] && !b[row][1] && b[row][0] === 'r') moves.push([row, 2]);
+        }
+      }
+    }
+    return moves;
+  }
+  return moves;
+}
+
+function isInCheck(b, t) {
+  const kingP = t === 'white' ? 'K' : 'k';
+  let kr = -1, kc = -1;
+  for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
+    if (b[r][c] === kingP) { kr = r; kc = c; break; }
+  }
+  if (kr === -1) return false;
+  const opp = t === 'white' ? 'black' : 'white';
+  for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
+    if (!b[r][c] || !isEnemy(b[r][c], t)) continue;
+    const ms = pieceMoves(b, r, c, opp, null, null);
+    if (ms.some(([mr, mc]) => mr === kr && mc === kc)) return true;
+  }
+  return false;
+}
+
+function legalMoves(b, r, c, t, epSq, castling) {
+  const pseudo = pieceMoves(b, r, c, t, epSq, castling);
+  const legal = [];
+  for (const [nr, nc] of pseudo) {
+    const nb = cloneBoard(b);
+    applyMoveToBoard(nb, r, c, nr, nc, t, epSq);
+    if (!isInCheck(nb, t)) legal.push([nr, nc]);
+  }
+  return legal;
+}
+
+function applyMoveToBoard(b, fr, fc, tr, tc, t, epSq) {
+  const p  = b[fr][fc];
+  const pt = p ? p.toUpperCase() : '';
+  b[tr][tc] = p;
+  b[fr][fc] = null;
+  if (pt === 'P' && epSq && tr === epSq[0] && tc === epSq[1]) {
+    const captRow = t === 'white' ? tr + 1 : tr - 1;
+    b[captRow][tc] = null;
+  }
+  if (pt === 'K') {
+    if (fc === 4 && tc === 6) { b[fr][5] = b[fr][7]; b[fr][7] = null; }
+    if (fc === 4 && tc === 2) { b[fr][3] = b[fr][0]; b[fr][0] = null; }
+  }
+  if (pt === 'P' && (tr === 0 || tr === 7)) {
+    b[tr][tc] = t === 'white' ? 'Q' : 'q';
+  }
+}
+
+// ── SAN ──
+function toAlg(r, c) { return 'abcdefgh'[c] + (8 - r); }
+function fromAlg(s)  { return [8 - parseInt(s[1]), 'abcdefgh'.indexOf(s[0])]; }
+
+function moveToSAN(b, fr, fc, tr, tc, t, epSq, castling) {
+  const p  = b[fr][fc];
+  const pt = p ? p.toUpperCase() : '';
+  const captured = b[tr][tc] || (pt === 'P' && epSq && tr === epSq[0] && tc === epSq[1]);
+  if (pt === 'K') {
+    if (fc === 4 && tc === 6) return 'O-O';
+    if (fc === 4 && tc === 2) return 'O-O-O';
+  }
+  let san = '';
+  if (pt !== 'P') san += pt;
+  if (pt !== 'P') {
+    const sameType = [];
+    for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
+      if (r === fr && c === fc) continue;
+      if (b[r][c] === p) {
+        const lm = legalMoves(b, r, c, t, epSq, castling);
+        if (lm.some(([lr, lc]) => lr === tr && lc === tc)) sameType.push([r, c]);
+      }
+    }
+    if (sameType.length > 0) {
+      const sameFile = sameType.filter(([r, c]) => c === fc);
+      const sameRank = sameType.filter(([r, c]) => r === fr);
+      if (sameFile.length === 0) san += 'abcdefgh'[fc];
+      else if (sameRank.length === 0) san += (8 - fr);
+      else san += 'abcdefgh'[fc] + (8 - fr);
+    }
+  }
+  if (captured) { if (pt === 'P') san += 'abcdefgh'[fc]; san += 'x'; }
+  san += toAlg(tr, tc);
+  if (pt === 'P' && (tr === 0 || tr === 7)) san += '=Q';
+  const nb = cloneBoard(b);
+  applyMoveToBoard(nb, fr, fc, tr, tc, t, epSq);
+  const opp = t === 'white' ? 'black' : 'white';
+  if (isInCheck(nb, opp)) {
+    let hasMoves = false;
+    outer: for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
+      if (!nb[r][c] || !isFriend(nb[r][c], opp)) continue;
+      const lm = legalMoves(nb, r, c, opp, null, castling);
+      if (lm.length > 0) { hasMoves = true; break outer; }
+    }
+    san += hasMoves ? '+' : '#';
+  }
+  return san;
+}
+
+// ── Board Rendering ──
+function renderBoard() {
+  const boardEl = document.getElementById('board');
+  boardEl.innerHTML = '';
+
+  for (let visualRow = 0; visualRow < 8; visualRow++) {
+    for (let visualCol = 0; visualCol < 8; visualCol++) {
+      const r = flipped ? 7 - visualRow : visualRow;
+      const c = flipped ? 7 - visualCol : visualCol;
+
+      const sq = document.createElement('div');
+      const isLight = (r + c) % 2 === 0;
+      sq.className = 'sq ' + (isLight ? 'light' : 'dark');
+      sq.dataset.r = r;
+      sq.dataset.c = c;
+
+      const p = board[r][c];
+      if (p) {
+        const span = document.createElement('span');
+        const w = p === p.toUpperCase();
+        span.className = 'piece ' + (w ? 'white-piece' : 'black-piece');
+        span.textContent = pieceSymbol(p);
+        sq.appendChild(span);
+        sq.classList.add('has-piece');
+      }
+
+      if (selectedSq && selectedSq[0] === r && selectedSq[1] === c) sq.classList.add('selected');
+      if (highlightLastMove.some(([lr, lc]) => lr === r && lc === c)) sq.classList.add('last-move');
+
+      sq.addEventListener('click', () => handleSquareClick(r, c));
+      boardEl.appendChild(sq);
+    }
+  }
+
+  applyHints();
+  renderLabels();
+}
+
+function renderLabels() {
+  const files = 'abcdefgh';
+  const ranks = '87654321';
+  const topRow   = document.getElementById('file-labels-top');
+  const botRow   = document.getElementById('file-labels-bottom');
+  const leftCol  = document.getElementById('rank-labels-left');
+  const rightCol = document.getElementById('rank-labels-right');
+  if (!topRow) return;
+  topRow.innerHTML = botRow.innerHTML = leftCol.innerHTML = rightCol.innerHTML = '';
+  for (let i = 0; i < 8; i++) {
+    const fi = flipped ? 7 - i : i;
+    const ri = flipped ? i : 7 - i;
+    const tf = document.createElement('div'); tf.className = 'board-label-file'; tf.textContent = files[fi]; topRow.appendChild(tf);
+    const bf = document.createElement('div'); bf.className = 'board-label-file'; bf.textContent = files[fi]; botRow.appendChild(bf);
+    const lr = document.createElement('div'); lr.className = 'board-label'; lr.textContent = ranks[ri]; leftCol.appendChild(lr);
+    const rr = document.createElement('div'); rr.className = 'board-label'; rr.textContent = ranks[ri]; rightCol.appendChild(rr);
+  }
+}
+
+// ── Hints ──
+function applyHints() {
+  updateHintsStatus();
+  if (!hintsOn || !selectedOpening) return;
+  const moves = selectedOpening.moves;
+  const done = moveHistory.length;
+  if (done >= moves.length) return;
+  const mv = uciToMove(moves[done]);
+  if (!mv) return;
+  document.querySelectorAll('#board .sq').forEach(sq => {
+    const r = +sq.dataset.r, c = +sq.dataset.c;
+    if (r === mv.fr && c === mv.fc) sq.classList.add('hint-from');
+    if (r === mv.tr && c === mv.tc) {
+      sq.classList.add('hint-to');
+      if (board[mv.tr][mv.tc]) sq.classList.add('has-piece');
+    }
+  });
+}
+
+function updateHintsStatus() {
+  const el = document.getElementById('hints-status');
+  if (!el) return;
+  if (!selectedOpening) {
+    el.textContent = 'Select an opening above to see hints';
+    el.className = 'hints-status';
+    return;
+  }
+  const moves = selectedOpening.moves;
+  const done = moveHistory.length;
+  if (!hintsOn) {
+    el.textContent = 'Hints are off — play freely';
+    el.className = 'hints-status';
+    return;
+  }
+  if (done >= moves.length) {
+    el.textContent = '✓ Line complete!';
+    el.className = 'hints-status done';
+    return;
+  }
+  el.textContent = `Move ${done}/${moves.length}`;
+  el.className = 'hints-status ok';
+}
+
+function toggleHints() {
+  hintsOn = !hintsOn;
+  const btn = document.getElementById('hints-toggle-btn');
+  if (btn) {
+    btn.textContent = hintsOn ? '💡 Hints ON' : '💡 Hints OFF';
+    btn.className = 'hint-toggle-btn' + (hintsOn ? ' on' : '');
+  }
+  renderBoard();
+}
+
+// ── Click Handling ──
+function handleSquareClick(r, c) {
+  const piece = board[r][c];
+
+  if (!selectedSq) {
+    if (!piece) return;
+    if (turn === 'white' && !isWhite(piece)) return;
+    if (turn === 'black' && !isBlack(piece)) return;
+    selectedSq = [r, c];
+    renderBoard();
+    showLegalDots(r, c);
+    return;
+  }
+
+  const [fr, fc] = selectedSq;
+  if (fr === r && fc === c) { selectedSq = null; renderBoard(); return; }
+
+  const legal = legalMoves(board, fr, fc, turn, enPassantSq, castlingRights);
+  if (!legal.some(([lr, lc]) => lr === r && lc === c)) {
+    if (piece && isFriend(piece, turn)) { selectedSq = [r, c]; renderBoard(); showLegalDots(r, c); return; }
+    selectedSq = null; renderBoard(); return;
+  }
+
+  const san = moveToSAN(board, fr, fc, r, c, turn, enPassantSq, castlingRights);
+  executeMove(fr, fc, r, c, san);
+  selectedSq = null;
+}
+
+function showLegalDots(r, c) {
+  const legal = legalMoves(board, r, c, turn, enPassantSq, castlingRights);
+  document.querySelectorAll('#board .sq').forEach(sq => {
+    const sr = +sq.dataset.r, sc = +sq.dataset.c;
+    if (legal.some(([lr, lc]) => lr === sr && lc === sc)) {
+      sq.classList.add(board[sr][sc] ? 'can-capture' : 'can-move');
+    }
+  });
+}
+
+function executeMove(fr, fc, tr, tc, san) {
+  const piece = board[fr][fc];
+  let newEP = null;
+  const pt = piece ? piece.toUpperCase() : '';
+  if (pt === 'P' && Math.abs(fr - tr) === 2) newEP = [(fr + tr) / 2, fc];
+
+  if (piece === 'K') { castlingRights.K = false; castlingRights.Q = false; }
+  if (piece === 'k') { castlingRights.k = false; castlingRights.q = false; }
+  if (fr === 7 && fc === 7) castlingRights.K = false;
+  if (fr === 7 && fc === 0) castlingRights.Q = false;
+  if (fr === 0 && fc === 7) castlingRights.k = false;
+  if (fr === 0 && fc === 0) castlingRights.q = false;
+
+  applyMoveToBoard(board, fr, fc, tr, tc, turn, enPassantSq);
+  enPassantSq = newEP;
+
+  const captured = board[tr][tc];
+  moveHistory = moveHistory.slice(0, currentMoveIdx + 1);
+  moveHistory.push({ fr, fc, tr, tc, piece, captured, san });
+  currentMoveIdx = moveHistory.length - 1;
+  movesDone = moveHistory.length;
+
+  highlightLastMove = [[fr, fc], [tr, tc]];
+  turn = turn === 'white' ? 'black' : 'white';
+
+  timerOnMove();
+  renderBoard();
+  renderMoveList();
+}
+
+// ── Undo ──
+function undoMove() {
+  if (currentMoveIdx < 0) return;
+  moveHistory = moveHistory.slice(0, currentMoveIdx);
+  currentMoveIdx = moveHistory.length - 1;
+  movesDone = moveHistory.length;
+  rebuildBoardToIdx(currentMoveIdx);
+}
+
+// ── Move List ──
+function renderMoveList() {
+  const ml = document.getElementById('move-list');
+  if (!ml) return;
+  ml.innerHTML = '';
+  for (let i = 0; i < moveHistory.length; i++) {
+    if (i % 2 === 0) {
+      const num = document.createElement('span');
+      num.className = 'move-token move-num';
+      num.textContent = (i / 2 + 1) + '.';
+      ml.appendChild(num);
+    }
+    const mv = document.createElement('span');
+    mv.className = 'move-token ' + (i % 2 === 0 ? 'white-move' : 'black-move');
+    if (i === currentMoveIdx) mv.classList.add('current');
+    mv.textContent = moveHistory[i].san;
+    ml.appendChild(mv);
+  }
+  ml.scrollTop = ml.scrollHeight;
+}
+
+// ── Board Rebuild ──
+function rebuildBoardToIdx(idx) {
+  board = deepCopy(INIT_POSITION);
+  enPassantSq = null;
+  castlingRights = { K: true, Q: true, k: true, q: true };
+  turn = 'white';
+  for (let i = 0; i <= idx; i++) {
+    const mv = moveHistory[i];
+    applyMoveToBoard(board, mv.fr, mv.fc, mv.tr, mv.tc, turn, enPassantSq);
+    if (mv.piece && mv.piece.toUpperCase() === 'P' && Math.abs(mv.fr - mv.tr) === 2) {
+      enPassantSq = [(mv.fr + mv.tr) / 2, mv.fc];
+    } else {
+      enPassantSq = null;
+    }
+    if (mv.piece === 'K') { castlingRights.K = false; castlingRights.Q = false; }
+    if (mv.piece === 'k') { castlingRights.k = false; castlingRights.q = false; }
+    turn = turn === 'white' ? 'black' : 'white';
+  }
+  highlightLastMove = idx >= 0
+    ? [[moveHistory[idx].fr, moveHistory[idx].fc], [moveHistory[idx].tr, moveHistory[idx].tc]]
+    : [];
+  renderBoard();
+  renderMoveList();
+}
+
+// ── Reset / Flip ──
+function resetBoard() {
+  board = deepCopy(INIT_POSITION);
+  turn = 'white';
+  selectedSq = null;
+  moveHistory = [];
+  currentMoveIdx = -1;
+  movesDone = 0;
+  highlightLastMove = [];
+  castlingRights = { K: true, Q: true, k: true, q: true };
+  enPassantSq = null;
+  resetTimer();
+  renderBoard();
+  renderMoveList();
+}
+
+function flipBoard() { flipped = !flipped; renderBoard(); }
+
+// ── Player Color ──
+function setPlayerColor(color) {
+  playerColor = color;
+  document.getElementById('btn-white').className = 'color-btn' + (color === 'white' ? ' active' : '');
+  document.getElementById('btn-black').className = 'color-btn' + (color === 'black' ? ' active' : '');
+  flipped = color === 'black';
+  resetBoard();
+}
+
+// ── Opening Selection ──
+function populateOpeningSelect() {
+  const sel = document.getElementById('opening-select');
+  sel.innerHTML = '<option value="">— Free play —</option>';
+  DEFAULT_REPERTOIRE.forEach((op, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = op.name;
+    sel.appendChild(opt);
+  });
+}
+
+function onOpeningSelect() {
+  const sel = document.getElementById('opening-select');
+  const idx = sel.value;
+  if (idx === '') {
+    selectedOpening = null;
+    document.getElementById('notes-card').style.display = 'none';
+    document.getElementById('opening-tags').innerHTML = '';
+    resetBoard();
+    return;
+  }
+  selectedOpening = DEFAULT_REPERTOIRE[parseInt(idx)];
+  flipped = selectedOpening.color === 'black';
+  playerColor = selectedOpening.color || 'white';
+  document.getElementById('btn-white').className = 'color-btn' + (playerColor === 'white' ? ' active' : '');
+  document.getElementById('btn-black').className = 'color-btn' + (playerColor === 'black' ? ' active' : '');
+
+  // Tag chips under dropdown
+  renderTagChips(selectedOpening.tags || [], 'opening-tags');
+
+  // Notes card
+  document.getElementById('notes-card').style.display = '';
+  document.getElementById('notes-name').textContent = selectedOpening.name;
+  document.getElementById('notes-text').textContent = selectedOpening.description || '';
+  renderTagChips(selectedOpening.tags || [], 'notes-tags');
+
+  resetBoard();
+}
+
+function renderTagChips(tags, containerId) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = '';
+  tags.forEach(tag => {
+    const chip = document.createElement('span');
+    const cls = ['trap','gambit','solid','aggressive'].includes(tag) ? `chip chip-${tag}` : 'chip chip-default';
+    chip.className = cls;
+    chip.textContent = tag;
+    el.appendChild(chip);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// PRACTICE TIMER
+// ═══════════════════════════════════════════════════════
+
+let timerInterval  = null;
+let timerSeconds   = 0;
+let timerRunning   = false;
+
+function fmtTime(s) {
+  const m   = Math.floor(s / 60).toString().padStart(2, '0');
+  const sec = (s % 60).toString().padStart(2, '0');
+  return `${m}:${sec}`;
+}
+
+function updateTimerDisplay() {
+  const el = document.getElementById('timer-display');
+  if (!el) return;
+  el.textContent = fmtTime(timerSeconds);
+  el.className = 'timer-display ' + (timerRunning ? 'running' : 'stopped');
+}
+
+function toggleTimer() {
+  timerRunning ? stopTimer() : startTimer();
+}
+
+function startTimer() {
+  if (timerRunning) return;
+  timerRunning = true;
+  timerInterval = setInterval(() => { timerSeconds++; updateTimerDisplay(); }, 1000);
+  const btn = document.getElementById('timer-toggle-btn');
+  if (btn) btn.textContent = '⏹ Stop';
+  updateTimerDisplay();
+}
+
+function stopTimer() {
+  if (!timerRunning) return;
+  clearInterval(timerInterval);
+  timerRunning = false;
+  const btn = document.getElementById('timer-toggle-btn');
+  if (btn) btn.textContent = '▶ Start';
+  updateTimerDisplay();
+}
+
+function resetTimer() {
+  clearInterval(timerInterval);
+  timerRunning = false;
+  timerSeconds = 0;
+  const btn = document.getElementById('timer-toggle-btn');
+  if (btn) btn.textContent = '▶ Start';
+  updateTimerDisplay();
+}
+
+function timerOnMove() {
+  const auto = document.getElementById('timer-auto');
+  if (auto && auto.checked && !timerRunning && timerSeconds === 0 && moveHistory.length === 1) {
+    startTimer();
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// STATS & INIT
+// ═══════════════════════════════════════════════════════
+
+function initLocalStats() {
+  try {
+    const raw = localStorage.getItem('chessCoachStats');
+    const stats = raw ? JSON.parse(raw) : {};
+    stats.sessions = (stats.sessions || 0) + 1;
+    localStorage.setItem('chessCoachStats', JSON.stringify(stats));
+    const el = document.getElementById('stat-sessions');
+    if (el) el.textContent = stats.sessions.toLocaleString();
+  } catch(e) {}
+}
+
+async function trackVisit() {
+  try {
+    const r = await fetch('https://api.counterapi.dev/v1/chess-opening-coach-rg/pageviews/up');
+    if (!r.ok) return;
+    const data = await r.json();
+    const el = document.getElementById('stat-visits');
+    if (el) el.textContent = data.count.toLocaleString();
+  } catch(e) {}
+}
+
+// ── Boot ──
+board = deepCopy(INIT_POSITION);
+populateOpeningSelect();
+renderBoard();
+renderMoveList();
+initLocalStats();
+trackVisit();
+</script>
+
+<!-- COURSES SECTION -->
+<section class="courses-section" id="courses">
+  <div class="courses-header">
+    <span class="courses-heading">📚 Recommended Courses</span>
+    <a class="courses-cta" href="https://www.chessreps.com/signup?nextUrl=/plans" target="_blank">Start for free →</a>
+  </div>
+  <div class="courses-grid">
+
+    <a class="course-card" href="https://www.chessreps.com" target="_blank">
+      <div class="course-name">London System</div>
+      <div class="course-desc">So solid Black can do pretty much nothing to counter. People hate it. Use that.</div>
+      <div class="course-meta"><span>28 lines</span><span class="course-try">Try first line →</span></div>
+    </a>
+
+    <a class="course-card" href="https://www.chessreps.com" target="_blank">
+      <div class="course-name">Sicilian Defense</div>
+      <div class="course-desc">Some call it the Rolls Royce of openings. The longest course for a reason — 38 lines of sharp, unbalanced chess.</div>
+      <div class="course-meta"><span>38 lines</span><span class="course-try">Try first line →</span></div>
+    </a>
+
+    <a class="course-card" href="https://www.chessreps.com" target="_blank">
+      <div class="course-name">Ruy Lopez</div>
+      <div class="course-desc">The most solid opening on this site. If you want to win games, this is where you start.</div>
+      <div class="course-meta"><span>55 lines</span><span class="course-try">Try first line →</span></div>
+    </a>
+
+    <a class="course-card" href="https://www.chessreps.com" target="_blank">
+      <div class="course-name">Fried Liver Attack</div>
+      <div class="course-desc">Checkmate your opponent in 8 moves. One of the most dangerous openings in chess.</div>
+      <div class="course-meta"><span>15 lines</span><span class="course-try">Try first line →</span></div>
+    </a>
+
+    <a class="course-card" href="https://www.chessreps.com" target="_blank">
+      <div class="course-name">King's Gambit</div>
+      <div class="course-desc">Give up your pawn. Expose your king. All on the second move. What else is there to say?</div>
+      <div class="course-meta"><span>22 lines</span><span class="course-try">Try first line →</span></div>
+    </a>
+
+    <a class="course-card" href="https://www.chessreps.com" target="_blank">
+      <div class="course-name">Vienna Gambit</div>
+      <div class="course-desc">Sacrifice a pawn on move 3 to win a powerful position — and get it back three moves later.</div>
+      <div class="course-meta"><span>14 lines</span><span class="course-try">Try first line →</span></div>
+    </a>
+
+    <a class="course-card" href="https://www.chessreps.com" target="_blank">
+      <div class="course-name">Caro-Kann</div>
+      <div class="course-desc">Fight back against the King's Pawn Opening by preparing to strike at the center.</div>
+      <div class="course-meta"><span>28 lines</span><span class="course-try">Try first line →</span></div>
+    </a>
+
+    <a class="course-card" href="https://www.chessreps.com" target="_blank">
+      <div class="course-name">Stafford Gambit</div>
+      <div class="course-desc">Lose a pawn, then swindle your opponent into losing the game. The fun way to play chess.</div>
+      <div class="course-meta"><span>20 lines</span><span class="course-try">Try first line →</span></div>
+    </a>
+
+    <a class="course-card" href="https://www.chessreps.com" target="_blank">
+      <div class="course-name">Italian Game</div>
+      <div class="course-desc">This is-a one-a spicy-a meatball-a! 🍝 A classic — and a great complement to the traps in this coach.</div>
+      <div class="course-meta"><span>22 lines</span><span class="course-try">Try first line →</span></div>
+    </a>
+
+    <a class="course-card" href="https://www.chessreps.com" target="_blank">
+      <div class="course-name">Scotch Game</div>
+      <div class="course-desc">A literal cheat code. It's just so good and so easy.</div>
+      <div class="course-meta"><span>27 lines</span><span class="course-try">Try first line →</span></div>
+    </a>
+
+    <a class="course-card" href="https://www.chessreps.com" target="_blank">
+      <div class="course-name">Queen's Gambit</div>
+      <div class="course-desc">Gambit a pawn, and when they take, you will win the game. As seen on Netflix.</div>
+      <div class="course-meta"><span>16 lines</span><span class="course-try">Try first line →</span></div>
+    </a>
+
+    <a class="course-card" href="https://www.chessreps.com" target="_blank">
+      <div class="course-name">Danish Gambit</div>
+      <div class="course-desc">Sacrifice a pawn. Then another. Then ANOTHER. End up with a crushing position.</div>
+      <div class="course-meta"><span>15 lines</span><span class="course-try">Try first line →</span></div>
+    </a>
+
+    <a class="course-card" href="https://www.chessreps.com" target="_blank">
+      <div class="course-name">King's Indian Defense</div>
+      <div class="course-desc">PLEASE don't click this unless you know what you're doing. 35 lines of complex, dynamic chess.</div>
+      <div class="course-meta"><span>35 lines</span><span class="course-try">Try first line →</span></div>
+    </a>
+
+    <a class="course-card" href="https://www.chessreps.com" target="_blank">
+      <div class="course-name">French Defense</div>
+      <div class="course-desc">Lock your bishop in jail, then spend the rest of the game proving it was all part of the plan.</div>
+      <div class="course-meta"><span>26 lines</span><span class="course-try">Try first line →</span></div>
+    </a>
+
+    <a class="course-card" href="https://www.chessreps.com" target="_blank">
+      <div class="course-name">Traxler Counterattack</div>
+      <div class="course-desc">Destroy anyone who tries the Fried Liver Attack against you. Make them regret learning chess.</div>
+      <div class="course-meta"><span>26 lines</span><span class="course-try">Try first line →</span></div>
+    </a>
+
+    <a class="course-card" href="https://www.chessreps.com" target="_blank">
+      <div class="course-name">Scandinavian Defense</div>
+      <div class="course-desc">Put your queen out on the second move. Tough, but rewarding if you commit.</div>
+      <div class="course-meta"><span>25 lines</span><span class="course-try">Try first line →</span></div>
+    </a>
+
+  </div>
+
+  <div style="text-align:center;margin-top:18px;">
+    <a href="https://www.chessreps.com/community" target="_blank" style="font-family:'Cinzel',serif;font-size:0.72rem;color:var(--text-dim);letter-spacing:1px;text-decoration:none;transition:color 0.2s;" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--text-dim)'">
+      Browse 500+ community courses on chessreps.com →
+    </a>
+  </div>
+</section>
+
+<!-- ABOUT + FOOTER -->
+<div id="about" style="width:100%;max-width:900px;margin-top:40px;">
+  <footer class="site-footer">
+    <span class="footer-logo">♟ CHESS OPENING COACH</span>
+    <div class="footer-links">
+      <a href="https://www.chessreps.com" target="_blank">ChessReps.com</a>
+      <a href="https://lichess.org/learn" target="_blank">Lichess Learn</a>
+      <a href="https://www.chess.com/openings" target="_blank">Chess.com Openings</a>
+    </div>
+    <span style="font-size:0.65rem;color:var(--border);">Runs entirely in your browser · No data collected</span>
+  </footer>
+</div>
+
+</body>
+</html>
