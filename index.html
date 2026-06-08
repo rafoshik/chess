@@ -271,24 +271,24 @@
 
     /* ── PIECE COLOURS ── */
     .piece { position: relative; z-index: 3; line-height: 1; display: flex; align-items: center; justify-content: center; pointer-events: none; }
-    /* Both sides now use filled glyphs — same shape, different colour */
+    /* White: outline glyphs scaled up slightly to match filled black visually */
     .white-piece {
       color: #ffffff;
-      /* Dark outline on all sides so white shows on light squares */
+      font-size: calc(var(--piece-size) * 1.12);
       filter: drop-shadow(0  1px 0 #1a1a1a)
               drop-shadow(0 -1px 0 #1a1a1a)
               drop-shadow( 1px 0  0 #1a1a1a)
               drop-shadow(-1px 0  0 #1a1a1a)
-              drop-shadow(0 2px 4px rgba(0,0,0,0.6));
+              drop-shadow(0 2px 3px rgba(0,0,0,0.5));
     }
+    /* Black: solid filled glyphs with a faint light rim */
     .black-piece {
       color: #111111;
-      /* Same 4-sided outline treatment as white, but with light colour */
-      filter: drop-shadow(0  1px 0 rgba(255,255,255,0.6))
-              drop-shadow(0 -1px 0 rgba(255,255,255,0.6))
-              drop-shadow( 1px 0  0 rgba(255,255,255,0.6))
-              drop-shadow(-1px 0  0 rgba(255,255,255,0.6))
-              drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+      filter: drop-shadow(0  1px 0 rgba(255,255,255,0.5))
+              drop-shadow(0 -1px 0 rgba(255,255,255,0.3))
+              drop-shadow( 1px 0  0 rgba(255,255,255,0.3))
+              drop-shadow(-1px 0  0 rgba(255,255,255,0.3))
+              drop-shadow(0 2px 4px rgba(0,0,0,0.6));
     }
 
     /* ── TIMER BAR ── */
@@ -973,12 +973,17 @@ let selectedOpening = null;
 let movesDone = 0;
 
 // ── Glyphs ──
-// Use filled glyphs for BOTH sides — same visual size, colour set by CSS
-const FILLED_GLYPHS = { K:'♚', Q:'♛', R:'♜', B:'♝', N:'♞', P:'♟' };
+// White = outline glyphs (♔♕♖♗♘♙) — render as hollow/white shapes
+// Black = filled glyphs (♚♛♜♝♞♟) — render as solid/dark shapes
+// This is the only cross-platform reliable way to get actual colour difference
+const WP_GLYPHS = { K:'♔', Q:'♕', R:'♖', B:'♗', N:'♘', P:'♙' };
+const BP_GLYPHS = { K:'♚', Q:'♛', R:'♜', B:'♝', N:'♞', P:'♟' };
 
 function pieceSymbol(p) {
   if (!p) return '';
-  return FILLED_GLYPHS[p.toUpperCase()] || p;
+  const isW = p === p.toUpperCase();
+  const t   = p.toUpperCase();
+  return isW ? (WP_GLYPHS[t] || p) : (BP_GLYPHS[t] || p);
 }
 
 // ── Helpers ──
