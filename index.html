@@ -388,6 +388,9 @@
       .main-layout { flex-direction: column; align-items: center; gap: 14px; }
       .side-panel { width: 100%; max-width: calc(8 * 54px + 40px); }
       .timer-bar { width: 100% !important; }
+      /* Opening selector moves to the top on mobile */
+      #card-opening { order: -2; }
+      #card-color   { order: -1; }
     }
 
     /* Phone landscape / small tablet */
@@ -501,7 +504,7 @@
   <h1>♟ OPENING COACH</h1>
   <p class="subtitle">Master chess openings — drill until they're second nature.</p>
   <div class="stats-strip">
-    <div class="stat-item">
+    <div class="stat-item" id="stat-visits-item" style="display:none">
       <span class="stat-num" id="stat-visits">—</span>
       <span class="stat-label">Total Visits</span>
     </div>
@@ -559,7 +562,7 @@
   <div class="side-panel">
 
     <!-- Card 1: You Play As -->
-    <div class="card">
+    <div class="card" id="card-color">
       <div class="card-title">You Play As</div>
       <div class="color-btn-group">
         <button class="color-btn active" id="btn-white" onclick="setPlayerColor('white')">♔ White</button>
@@ -568,7 +571,7 @@
     </div>
 
     <!-- Card 2: Opening -->
-    <div class="card">
+    <div class="card" id="card-opening">
       <div class="card-title">Opening</div>
       <select id="opening-select" onchange="onOpeningSelect()">
         <option value="">— Free play —</option>
