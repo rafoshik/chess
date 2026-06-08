@@ -167,6 +167,9 @@
     .hint-toggle-btn:hover { border-color: var(--gold-dim); }
 
     /* ── MAIN LAYOUT ── */
+    /* Square size variable — override in media queries */
+    :root { --sq: 62px; --piece-size: 2.1rem; }
+
     .main-layout {
       display: flex; gap: 18px;
       width: 100%; max-width: 900px;
@@ -185,7 +188,7 @@
     .board-label {
       font-family: 'Cinzel', serif; font-size: 0.6rem;
       color: var(--text-dim); text-align: center;
-      height: 62px; line-height: 62px;
+      height: var(--sq); line-height: var(--sq);
     }
     .board-label-file {
       flex: 1; text-align: center;
@@ -195,16 +198,16 @@
 
     #board {
       display: grid;
-      grid-template-columns: repeat(8, 62px);
-      grid-template-rows: repeat(8, 62px);
+      grid-template-columns: repeat(8, var(--sq));
+      grid-template-rows: repeat(8, var(--sq));
       border: 2px solid var(--border);
       cursor: pointer;
     }
 
     .sq {
-      width: 62px; height: 62px;
+      width: var(--sq); height: var(--sq);
       display: flex; align-items: center; justify-content: center;
-      font-size: 2.1rem; position: relative;
+      font-size: var(--piece-size); position: relative;
       transition: background 0.15s; user-select: none;
     }
     .sq.light { background: var(--white-sq); }
@@ -368,6 +371,46 @@
 
     .help-text { font-size: 0.75rem; color: var(--text-dim); }
 
+    /* ── RESPONSIVE ── */
+
+    /* Tablet: stack board + panel vertically, shrink board slightly */
+    @media (max-width: 720px) {
+      :root { --sq: 54px; --piece-size: 1.85rem; }
+      .main-layout { flex-direction: column; align-items: center; gap: 14px; }
+      .side-panel { width: 100%; max-width: calc(8 * 54px + 40px); }
+      .timer-bar { width: 100% !important; }
+    }
+
+    /* Phone landscape / small tablet */
+    @media (max-width: 560px) {
+      :root { --sq: 44px; --piece-size: 1.55rem; }
+      .side-panel { max-width: calc(8 * 44px + 40px); }
+      .stats-strip { max-width: 100%; }
+      .stat-num { font-size: 1.2rem; }
+    }
+
+    /* Small phone */
+    @media (max-width: 420px) {
+      :root { --sq: 38px; --piece-size: 1.35rem; }
+      body { padding: 0 8px 40px; }
+      .site-header { padding: 0 14px; width: calc(100% + 16px); margin-left: -8px; }
+      .site-logo { font-size: 0.78rem; letter-spacing: 1px; }
+      .hero-section { padding: 24px 8px 16px; }
+      h1 { font-size: 1.4rem; letter-spacing: 2px; }
+      .stat-item { padding: 10px 8px; }
+      .stat-num { font-size: 1.1rem; }
+      .stat-label { font-size: 0.52rem; }
+      .courses-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Hide rank/file labels on very small screens to save space */
+    @media (max-width: 380px) {
+      :root { --sq: 36px; }
+      .board-labels-col, .board-labels-row { display: none; }
+      .board-labels-row { padding-left: 0; }
+      .board-wrapper { width: 100%; display: flex; justify-content: center; }
+    }
+
     /* ── COURSES SECTION ── */
     .courses-section {
       width: 100%; max-width: 900px;
@@ -487,7 +530,7 @@
     </div>
 
     <!-- TIMER BAR -->
-    <div class="timer-bar" style="width:496px;">
+    <div class="timer-bar" style="width:calc(8 * var(--sq) + 40px);">
       <div>
         <div class="timer-display stopped" id="timer-display">00:00</div>
         <div class="timer-label">Practice Timer</div>
