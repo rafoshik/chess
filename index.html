@@ -271,25 +271,22 @@
 
     /* ── PIECE COLOURS ── */
     .piece { position: relative; z-index: 3; line-height: 1; display: flex; align-items: center; justify-content: center; pointer-events: none; }
-    /* White: outline glyphs — scaled up to compensate for thinner strokes */
+    /* Both sides same glyph + same size — only color differs */
     .white-piece {
       color: #ffffff;
-      font-size: calc(var(--piece-size) * 1.18);
-      filter: drop-shadow(0  1px 0 #1a1a1a)
-              drop-shadow(0 -1px 0 #1a1a1a)
-              drop-shadow( 1px 0  0 #1a1a1a)
-              drop-shadow(-1px 0  0 #1a1a1a)
+      filter: drop-shadow(0  1px 0 #222)
+              drop-shadow(0 -1px 0 #222)
+              drop-shadow( 1px 0  0 #222)
+              drop-shadow(-1px 0  0 #222)
               drop-shadow(0 2px 3px rgba(0,0,0,0.5));
     }
-    /* Black: solid filled glyphs — scaled down to match outline white visually */
     .black-piece {
       color: #111111;
-      font-size: calc(var(--piece-size) * 0.92);
       filter: drop-shadow(0  1px 0 rgba(255,255,255,0.5))
               drop-shadow(0 -1px 0 rgba(255,255,255,0.3))
               drop-shadow( 1px 0  0 rgba(255,255,255,0.3))
               drop-shadow(-1px 0  0 rgba(255,255,255,0.3))
-              drop-shadow(0 2px 4px rgba(0,0,0,0.6));
+              drop-shadow(0 2px 4px rgba(0,0,0,0.5));
     }
 
     /* ── TIMER BAR ── */
@@ -974,17 +971,18 @@ let selectedOpening = null;
 let movesDone = 0;
 
 // ── Glyphs ──
-// White = outline glyphs (♔♕♖♗♘♙) — render as hollow/white shapes
-// Black = filled glyphs (♚♛♜♝♞♟) — render as solid/dark shapes
-// This is the only cross-platform reliable way to get actual colour difference
-const WP_GLYPHS = { K:'♔', Q:'♕', R:'♖', B:'♗', N:'♘', P:'♙' };
-const BP_GLYPHS = { K:'♚', Q:'♛', R:'♜', B:'♝', N:'♞', P:'♟' };
+// Use filled glyphs + U+FE0E (text variation selector) for BOTH sides.
+// The variation selector forces the browser to render as a plain text glyph
+// (not emoji), so CSS `color` works correctly on iOS/Android.
+const VS_TEXT = '︎'; // variation selector-15: force text presentation
+const PIECE_GLYPHS = {
+  K: '♚' + VS_TEXT, Q: '♛' + VS_TEXT, R: '♜' + VS_TEXT,
+  B: '♝' + VS_TEXT, N: '♞' + VS_TEXT, P: '♟' + VS_TEXT
+};
 
 function pieceSymbol(p) {
   if (!p) return '';
-  const isW = p === p.toUpperCase();
-  const t   = p.toUpperCase();
-  return isW ? (WP_GLYPHS[t] || p) : (BP_GLYPHS[t] || p);
+  return PIECE_GLYPHS[p.toUpperCase()] || p;
 }
 
 // ── Helpers ──
